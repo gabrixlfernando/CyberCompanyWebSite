@@ -941,6 +941,7 @@ section {
 .portfolio #portfolio-flters {
   list-style: none;
   margin-bottom: 20px;
+  flex-wrap: wrap;
 }
 
 .portfolio #portfolio-flters li {
