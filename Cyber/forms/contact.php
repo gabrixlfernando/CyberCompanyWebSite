@@ -1,41 +1,62 @@
 <?php
-  /**
-  * Requires the "PHP Email Form" library
-  * The "PHP Email Form" library is available only in the pro version of the template
-  * The library should be uploaded to: vendor/php-email-form/php-email-form.php
-  * For more info and help: https://bootstrapmade.com/php-email-form/
-  */
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
 
-  // Replace contact@example.com with your real receiving email address
-  $receiving_email_address = 'pedrovischisoares@gmail.com';
+// Incluir o PHPMailer usando o autoloader ou manualmente
+require '../assets/vendor/PHPMailer/src/Exception.php';
+require '../assets/vendor/PHPMailer/src/PHPMailer.php';
+require '../assets/vendor/PHPMailer/src/SMTP.php';
 
-  if( file_exists($php_email_form = '../assets/vendor/php-email-form/php-email-form.php' )) {
-    include( $php_email_form );
-  } else {
-    die( 'Unable to load the "PHP Email Form" Library!');
-  }
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    // Sanitização
+    $name = htmlspecialchars(strip_tags(trim($_POST['name'])), ENT_QUOTES, 'UTF-8');
+    $email = filter_var(trim($_POST['email']), FILTER_SANITIZE_EMAIL);
+    $subject = htmlspecialchars(strip_tags(trim($_POST['subject'])), ENT_QUOTES, 'UTF-8');
+    $message = htmlspecialchars(strip_tags(trim($_POST['message'])), ENT_QUOTES, 'UTF-8');
 
-  $contact = new  PHP_Email_Form;
-  $contact->ajax = true;
-  
-  $contact->to = $receiving_email_address;
-  $contact->from_name = $_POST['name'];
-  $contact->from_email = $_POST['email'];
-  $contact->subject = $_POST['subject'];
+    // Validação do e-mail
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        echo "Por favor, forneça um endereço de e-mail válido.";
+        exit;
+    }
 
-  // Uncomment below code if you want to use SMTP to send emails. You need to enter your correct SMTP credentials
-  /*
-  $contact->smtp = array(
-    'host' => 'example.com',
-    'username' => 'example',
-    'password' => 'pass',
-    'port' => '587'
-  );
-  */
+    // Verificação dos campos
+    if (!empty($name) && !empty($email) && !empty($subject) && !empty($message)) {
 
-  $contact->add_message( $_POST['name'], 'From');
-  $contact->add_message( $_POST['email'], 'Email');
-  $contact->add_message( $_POST['message'], 'Message', 10);
+        $mail = new PHPMailer(true); // Cria uma instância do PHPMailer
 
-  echo $contact->send();
+        // Configurações do servidor
+        $mail->isSMTP();                                       // Define o envio como SMTP
+        $mail->Host       = 'smtp.hostinger.com';               // Servidor SMTP da Hostinger
+        $mail->SMTPAuth   = true;                               // Habilita a autenticação SMTP
+        $mail->Username   = 'cybercompany@smpsistema.com.br';   // Seu endereço de e-mail da Hostinger
+        $mail->Password   = 'Senac@agencia02';                  // Sua senha da Hostinger
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;        // Habilita criptografia TLS
+        $mail->Port       = 465;                                // Porta TCP para TLS
+
+        // Remetente e destinatário
+        $mail->setFrom('cybercompany@smpsistema.com.br', $name); // Remetente
+        $mail->addAddress('biel_nando2012@hotmail.com');        // Destinatário
+
+        // Conteúdo do e-mail
+        $mail->isHTML(true);                                    // Define o formato do e-mail como HTML
+        $mail->Subject = $subject;                              // Assunto do e-mail
+        $mail->Body    = "Nome: $name<br>Email: $email<br><br>Mensagem:<br>$message"; // Corpo do e-mail em HTML
+        $mail->AltBody = "Nome: $name\nEmail: $email\n\nMensagem:\n$message";         // Alternativa em texto simples
+
+        // Tentativa de envio do e-mail
+        if ($mail->send()) {
+            // Se chegou aqui, o e-mail foi enviado com sucesso
+            echo "E-mail enviado com sucesso!";
+        } else {
+            // Se houve algum erro, exibe a mensagem de erro
+            echo "Falha ao enviar o e-mail. Mailer Error: {$mail->ErrorInfo}";
+        }
+
+    } else {
+        echo "Por favor, preencha todos os campos corretamente.";
+    }
+} else {
+    echo "Método de solicitação inválido.";
+}
 ?>
